@@ -151,7 +151,7 @@ const EditUser = () => {
           }
           <Form.Field>
             <Form.Input
-              label='已绑定的 GitHub 账户'
+              label='已绑定的 LMZGC 账户'
               name='github_id'
               value={github_id}
               autoComplete='new-password'

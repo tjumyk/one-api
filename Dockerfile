@@ -1,5 +1,7 @@
 FROM --platform=$BUILDPLATFORM node:16 AS builder
 
+RUN npm config set registry https://mirrors.cloud.tencent.com/npm/
+
 WORKDIR /web
 COPY ./VERSION .
 COPY ./web .
@@ -8,13 +10,13 @@ WORKDIR /web/default
 RUN npm install
 RUN DISABLE_ESLINT_PLUGIN='true' REACT_APP_VERSION=$(cat VERSION) npm run build
 
-WORKDIR /web/berry
-RUN npm install
-RUN DISABLE_ESLINT_PLUGIN='true' REACT_APP_VERSION=$(cat VERSION) npm run build
-
-WORKDIR /web/air
-RUN npm install
-RUN DISABLE_ESLINT_PLUGIN='true' REACT_APP_VERSION=$(cat VERSION) npm run build
+#WORKDIR /web/berry
+#RUN npm install
+#RUN DISABLE_ESLINT_PLUGIN='true' REACT_APP_VERSION=$(cat VERSION) npm run build
+#
+#WORKDIR /web/air
+#RUN npm install
+#RUN DISABLE_ESLINT_PLUGIN='true' REACT_APP_VERSION=$(cat VERSION) npm run build
 
 FROM golang:alpine AS builder2
 
@@ -22,7 +24,8 @@ RUN apk add --no-cache g++
 
 ENV GO111MODULE=on \
     CGO_ENABLED=1 \
-    GOOS=linux
+    GOOS=linux \
+    GOPROXY=https://mirrors.aliyun.com/goproxy/,direct
 
 WORKDIR /build
 ADD go.mod go.sum ./

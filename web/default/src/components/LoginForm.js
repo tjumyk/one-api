@@ -131,11 +131,12 @@ const LoginForm = () => {
             <div style={{ display: "flex", justifyContent: "center" }}>
               {status.github_oauth ? (
                 <Button
-                  circular
-                  color='black'
-                  icon='github'
+                  color='blue'
+                  size='large'
                   onClick={() => onGitHubOAuthClicked(status.github_client_id)}
-                />
+                >
+                  使用LMZGC身份登录
+                </Button>
               ) : (
                 <></>
               )}

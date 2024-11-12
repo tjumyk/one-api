@@ -93,7 +93,7 @@ const Home = () => {
                           : '未启用'}
                       </p>
                       <p>
-                        GitHub 身份验证：
+                        LMZGC 身份验证：
                         {statusState?.status?.github_oauth === true
                           ? '已启用'
                           : '未启用'}

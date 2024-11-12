@@ -233,7 +233,7 @@ function App() {
         }
       />
       <Route
-        path='/oauth/github'
+        path='/oauth-callback'
         element={
           <Suspense fallback={<Loading></Loading>}>
             <GitHubOAuth />

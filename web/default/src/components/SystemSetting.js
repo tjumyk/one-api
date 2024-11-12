@@ -322,7 +322,7 @@ const SystemSetting = () => {
             />
             <Form.Checkbox
               checked={inputs.GitHubOAuthEnabled === 'true'}
-              label='允许通过 GitHub 账户登录 & 注册'
+              label='允许通过 LMZGC 账户登录 & 注册'
               name='GitHubOAuthEnabled'
               onChange={handleInputChange}
             />
@@ -448,31 +448,31 @@ const SystemSetting = () => {
           <Form.Button onClick={submitSMTP}>保存 SMTP 设置</Form.Button>
           <Divider />
           <Header as='h3'>
-            配置 GitHub OAuth App
+            配置 LMZGC OAuth App
             <Header.Subheader>
-              用以支持通过 GitHub 进行登录注册，
-              <a href='https://github.com/settings/developers' target='_blank'>
+              用以支持通过 LMZGC 进行登录注册，
+              <a href='https://id.lmzgc.cn:8000/admin/oauth/clients' target='_blank'>
                 点击此处
               </a>
-              管理你的 GitHub OAuth App
+              管理你的 LMZGC OAuth App
             </Header.Subheader>
           </Header>
           <Message>
             Homepage URL 填 <code>{inputs.ServerAddress}</code>
             ，Authorization callback URL 填{' '}
-            <code>{`${inputs.ServerAddress}/oauth/github`}</code>
+            <code>{`${inputs.ServerAddress}/oauth-callback`}</code>
           </Message>
           <Form.Group widths={3}>
             <Form.Input
-              label='GitHub Client ID'
+              label='LMZGC Client ID'
               name='GitHubClientId'
               onChange={handleInputChange}
               autoComplete='new-password'
               value={inputs.GitHubClientId}
-              placeholder='输入你注册的 GitHub OAuth APP 的 ID'
+              placeholder='输入你注册的 LMZGC OAuth APP 的 ID'
             />
             <Form.Input
-              label='GitHub Client Secret'
+              label='LMZGC Client Secret'
               name='GitHubClientSecret'
               onChange={handleInputChange}
               type='password'
@@ -482,7 +482,7 @@ const SystemSetting = () => {
             />
           </Form.Group>
           <Form.Button onClick={submitGitHubOAuth}>
-            保存 GitHub OAuth 设置
+            保存 LMZGC OAuth 设置
           </Form.Button>
           <Divider />
           <Header as='h3'>

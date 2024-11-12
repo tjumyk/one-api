@@ -14,9 +14,9 @@ export async function getOAuthState() {
 export async function onGitHubOAuthClicked(github_client_id) {
   const state = await getOAuthState();
   if (!state) return;
-  window.open(
-    `https://github.com/login/oauth/authorize?client_id=${github_client_id}&state=${state}&scope=user:email`
-  );
+  let redirect_uri = `${window.location.origin}/oauth-callback`;
+  let url = `https://id.lmzgc.cn:8000/oauth/connect?client_id=${github_client_id}&redirect_url=${redirect_uri}&state=${state}`;
+  window.open(url);
 }
 
 export async function onLarkOAuthClicked(lark_client_id) {

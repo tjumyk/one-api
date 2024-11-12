@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,36 +12,41 @@ import (
 	"github.com/songquanpeng/one-api/controller"
 	"github.com/songquanpeng/one-api/model"
 	"net/http"
-	"strconv"
+	"net/url"
+	"strings"
 	"time"
 )
 
 type GitHubOAuthResponse struct {
 	AccessToken string `json:"access_token"`
-	Scope       string `json:"scope"`
-	TokenType   string `json:"token_type"`
 }
 
 type GitHubUser struct {
-	Login string `json:"login"`
-	Name  string `json:"name"`
+	Login string `json:"name"`
+	Name  string `json:"nickname"`
 	Email string `json:"email"`
+}
+
+type ErrorResp struct {
+	Msg    string `json:"msg"`
+	Detail string `json:"detail"`
 }
 
 func getGitHubUserInfoByCode(code string) (*GitHubUser, error) {
 	if code == "" {
 		return nil, errors.New("无效的参数")
 	}
-	values := map[string]string{"client_id": config.GitHubClientId, "client_secret": config.GitHubClientSecret, "code": code}
-	jsonData, err := json.Marshal(values)
+	data := url.Values{
+		"client_id":     {config.GitHubClientId},
+		"client_secret": {config.GitHubClientSecret},
+		"redirect_url":  {config.ServerAddress + "/oauth-callback"},
+		"token":         {code},
+	}
+	req, err := http.NewRequest("POST", "https://id.lmzgc.cn:8000/api/oauth/token", strings.NewReader(data.Encode()))
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("POST", "https://github.com/login/oauth/access_token", bytes.NewBuffer(jsonData))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
 	client := http.Client{
 		Timeout: 5 * time.Second,
@@ -50,7 +54,7 @@ func getGitHubUserInfoByCode(code string) (*GitHubUser, error) {
 	res, err := client.Do(req)
 	if err != nil {
 		logger.SysLog(err.Error())
-		return nil, errors.New("无法连接至 GitHub 服务器，请稍后重试！")
+		return nil, errors.New("无法连接至 LMZGC 服务器，请稍后重试！")
 	}
 	defer res.Body.Close()
 	var oAuthResponse GitHubOAuthResponse
@@ -58,7 +62,7 @@ func getGitHubUserInfoByCode(code string) (*GitHubUser, error) {
 	if err != nil {
 		return nil, err
 	}
-	req, err = http.NewRequest("GET", "https://api.github.com/user", nil)
+	req, err = http.NewRequest("GET", "https://id.lmzgc.cn:8000/api/account/me", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +70,7 @@ func getGitHubUserInfoByCode(code string) (*GitHubUser, error) {
 	res2, err := client.Do(req)
 	if err != nil {
 		logger.SysLog(err.Error())
-		return nil, errors.New("无法连接至 GitHub 服务器，请稍后重试！")
+		return nil, errors.New("无法连接至 LMZGC 服务器，请稍后重试！")
 	}
 	defer res2.Body.Close()
 	var githubUser GitHubUser
@@ -99,7 +103,7 @@ func GitHubOAuth(c *gin.Context) {
 	if !config.GitHubOAuthEnabled {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
-			"message": "管理员未开启通过 GitHub 登录以及注册",
+			"message": "管理员未开启通过 LMZGC 登录以及注册",
 		})
 		return
 	}
@@ -126,7 +130,8 @@ func GitHubOAuth(c *gin.Context) {
 		}
 	} else {
 		if config.RegisterEnabled {
-			user.Username = "github_" + strconv.Itoa(model.GetMaxUserId()+1)
+			// user.Username = "lmzgc_" + strconv.Itoa(model.GetMaxUserId()+1)
+			user.Username = githubUser.Login
 			if githubUser.Name != "" {
 				user.DisplayName = githubUser.Name
 			} else {
@@ -166,7 +171,7 @@ func GitHubBind(c *gin.Context) {
 	if !config.GitHubOAuthEnabled {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
-			"message": "管理员未开启通过 GitHub 登录以及注册",
+			"message": "管理员未开启通过 LMZGC 登录以及注册",
 		})
 		return
 	}
@@ -185,7 +190,7 @@ func GitHubBind(c *gin.Context) {
 	if model.IsGitHubIdAlreadyTaken(user.GitHubId) {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
-			"message": "该 GitHub 账户已被绑定",
+			"message": "该 LMZGC 账户已被绑定",
 		})
 		return
 	}
