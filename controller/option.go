@@ -55,7 +55,7 @@ func UpdateOption(c *gin.Context) {
 		if option.Value == "true" && config.GitHubClientId == "" {
 			c.JSON(http.StatusOK, gin.H{
 				"success": false,
-				"message": "无法启用 GitHub OAuth，请先填入 GitHub Client Id 以及 GitHub Client Secret！",
+				"message": "无法启用 LMZGC OAuth，请先填入 LMZGC Client Id 以及 LMZGC Client Secret！",
 			})
 			return
 		}
