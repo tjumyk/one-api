@@ -89,50 +89,62 @@ const LoginForm = () => {
         <Header as='h2' color='' textAlign='center'>
           <Image src={logo} /> 用户登录
         </Header>
-        <Form size='large'>
-          <Segment>
-            <Form.Input
-              fluid
-              icon='user'
-              iconPosition='left'
-              placeholder='用户名 / 邮箱地址'
-              name='username'
-              value={username}
-              onChange={handleChange}
-            />
-            <Form.Input
-              fluid
-              icon='lock'
-              iconPosition='left'
-              placeholder='密码'
-              name='password'
-              type='password'
-              value={password}
-              onChange={handleChange}
-            />
-            <Button color='green' fluid size='large' onClick={handleSubmit}>
-              登录
-            </Button>
-          </Segment>
-        </Form>
-        <Message>
-          忘记密码？
-          <Link to='/reset' className='btn btn-link'>
-            点击重置
-          </Link>
-          ； 没有账户？
-          <Link to='/register' className='btn btn-link'>
-            点击注册
-          </Link>
-        </Message>
+        {status.password_register_enabled ? (
+          <>
+            <Form size='large'>
+              <Segment>
+                <Form.Input
+                    fluid
+                    icon='user'
+                    iconPosition='left'
+                    placeholder='用户名 / 邮箱地址'
+                    name='username'
+                    value={username}
+                    onChange={handleChange}
+                />
+                <Form.Input
+                    fluid
+                    icon='lock'
+                    iconPosition='left'
+                    placeholder='密码'
+                    name='password'
+                    type='password'
+                    value={password}
+                    onChange={handleChange}
+                />
+                <Button color='green' fluid size='large' onClick={handleSubmit}>
+                  登录
+                </Button>
+              </Segment>
+            </Form>
+            <Message>
+              忘记密码？
+              <Link to='/reset' className='btn btn-link'>
+                点击重置
+              </Link>
+              ； 没有账户？
+              <Link to='/register' className='btn btn-link'>
+                点击注册
+              </Link>
+            </Message>
+          </>
+        ) : (
+            <></>
+        )}
+
         {status.github_oauth || status.wechat_login || status.lark_client_id ? (
           <>
-            <Divider horizontal>Or</Divider>
+            {status.password_register_enabled ? (
+                <Divider horizontal>Or</Divider>
+            ) : (
+                <></>
+            )}
             <div style={{ display: "flex", justifyContent: "center" }}>
               {status.github_oauth ? (
                 <Button
                   color='blue'
                   size='large'
+                  fluid
                   onClick={() => onGitHubOAuthClicked(status.github_client_id)}
                 >
                   使用LMZGC身份登录
