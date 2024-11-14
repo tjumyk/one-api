@@ -47,6 +47,23 @@ const Home = () => {
     return timestamp2string(timestamp);
   };
 
+  const sampleCode = `import os
+from openai import OpenAI
+
+os.environ['OPENAI_API_KEY'] = '<YOUR_OPENAI_API_KEY>'
+os.environ['OPENAI_BASE_URL'] = '${window.location.origin}/v1'
+
+client = OpenAI()
+chat_completion = client.chat.completions.create(
+    messages=[
+        {
+            "role": "user",
+            "content": "Say this is a test",
+        }
+    ],
+    model="gpt-4o"
+)`;
+
   useEffect(() => {
     displayNotice().then();
     displayHomePageContent().then();
@@ -55,6 +72,12 @@ const Home = () => {
     <>
       {
         homePageContentLoaded && homePageContent === '' ? <>
+          <Segment>
+            <Header as='h3'>调用方式</Header>
+            <code>
+              <pre>{sampleCode}</pre>
+            </code>
+          </Segment>
           <Segment>
             <Header as='h3'>系统状况</Header>
             <Grid columns={2} stackable>
