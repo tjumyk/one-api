@@ -207,7 +207,6 @@ func RelayAudioHelper(c *gin.Context, relayMode int) *relaymodel.ErrorWithStatus
 	}
 	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Accept", c.Request.Header.Get("Accept"))
-	println(req.Header.Get("Content-Length"))
 
 	resp, err := client.HTTPClient.Do(req)
 	if err != nil {
