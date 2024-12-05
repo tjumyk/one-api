@@ -10,7 +10,6 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -202,13 +201,12 @@ func RelayAudioHelper(c *gin.Context, relayMode int) *relaymodel.ErrorWithStatus
 		apiKey := c.Request.Header.Get("Authorization")
 		apiKey = strings.TrimPrefix(apiKey, "Bearer ")
 		req.Header.Set("api-key", apiKey)
-		req.ContentLength = c.Request.ContentLength
+		req.ContentLength = int64(bodySize)
 	} else {
 		req.Header.Set("Authorization", c.Request.Header.Get("Authorization"))
 	}
 	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Accept", c.Request.Header.Get("Accept"))
-	req.Header.Set("Content-Length", strconv.Itoa(bodySize))
 	println(req.Header.Get("Content-Length"))
 
 	resp, err := client.HTTPClient.Do(req)
