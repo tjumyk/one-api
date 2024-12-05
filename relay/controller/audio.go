@@ -10,6 +10,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -189,6 +190,7 @@ func RelayAudioHelper(c *gin.Context, relayMode int) *relaymodel.ErrorWithStatus
 
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(requestBody.Bytes()))
 	responseFormat := c.DefaultPostForm("response_format", "json")
+	bodySize := requestBody.Len()
 
 	req, err := http.NewRequest(c.Request.Method, fullRequestURL, &requestBody)
 	if err != nil {
@@ -206,6 +208,8 @@ func RelayAudioHelper(c *gin.Context, relayMode int) *relaymodel.ErrorWithStatus
 	}
 	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Accept", c.Request.Header.Get("Accept"))
+	req.Header.Set("Content-Length", strconv.Itoa(bodySize))
+	println(req.Header.Get("Content-Length"))
 
 	resp, err := client.HTTPClient.Do(req)
 	if err != nil {
