@@ -10,7 +10,6 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -148,40 +147,50 @@ func RelayAudioHelper(c *gin.Context, relayMode int) *relaymodel.ErrorWithStatus
 	}
 
 	var requestBody bytes.Buffer
-	writer := multipart.NewWriter(&requestBody)
-	writer.WriteField("model", audioModel)
+	var contentType string
+	if relayMode == relaymode.AudioTranscription {
+		writer := multipart.NewWriter(&requestBody)
+		writer.WriteField("model", audioModel)
 
-	// 获取所有表单字段
-	formData := c.Request.PostForm
-	// 遍历表单字段并打印输出
-	for key, values := range formData {
-		if key == "model" {
-			continue
+		// 获取所有表单字段
+		formData := c.Request.PostForm
+		// 遍历表单字段并打印输出
+		for key, values := range formData {
+			if key == "model" {
+				continue
+			}
+			for _, value := range values {
+				writer.WriteField(key, value)
+			}
 		}
-		for _, value := range values {
-			writer.WriteField(key, value)
+		// 添加文件字段
+		file, header, err := c.Request.FormFile("file")
+		if err != nil {
+			return openai.ErrorWrapper(err, "file_is_required", http.StatusInternalServerError)
 		}
+		defer file.Close()
+		part, err := writer.CreateFormFile("file", header.Filename)
+		if err != nil {
+			return openai.ErrorWrapper(err, "create_form_file_failed", http.StatusInternalServerError)
+		}
+		if _, err := io.Copy(part, file); err != nil {
+			return openai.ErrorWrapper(err, "copy_file_failed", http.StatusInternalServerError)
+		}
+		// 关闭 multipart 编写器以设置分界线
+		writer.Close()
+		contentType = writer.FormDataContentType()
+	} else {
+		_, err = io.Copy(&requestBody, c.Request.Body)
+		if err != nil {
+			return openai.ErrorWrapper(err, "new_request_body_failed", http.StatusInternalServerError)
+		}
+		contentType = c.Request.Header.Get("Content-Type")
 	}
-	// 添加文件字段
-	file, header, err := c.Request.FormFile("file")
-	if err != nil {
-		return openai.ErrorWrapper(err, "file_is_required", http.StatusInternalServerError)
-	}
-	defer file.Close()
-	part, err := writer.CreateFormFile("file", header.Filename)
-	if err != nil {
-		return openai.ErrorWrapper(err, "create_form_file_failed", http.StatusInternalServerError)
-	}
-	if _, err := io.Copy(part, file); err != nil {
-		return openai.ErrorWrapper(err, "copy_file_failed", http.StatusInternalServerError)
-	}
-	// 关闭 multipart 编写器以设置分界线
-	writer.Close()
 
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(requestBody.Bytes()))
 	responseFormat := c.DefaultPostForm("response_format", "json")
 
-	req, err := http.NewRequest(c.Request.Method, fullRequestURL, io.NopCloser(bytes.NewBuffer(requestBody.Bytes())))
+	req, err := http.NewRequest(c.Request.Method, fullRequestURL, &requestBody)
 	if err != nil {
 		return openai.ErrorWrapper(err, "new_request_failed", http.StatusInternalServerError)
 	}
@@ -195,8 +204,7 @@ func RelayAudioHelper(c *gin.Context, relayMode int) *relaymodel.ErrorWithStatus
 	} else {
 		req.Header.Set("Authorization", c.Request.Header.Get("Authorization"))
 	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req.Header.Set("Content-Length", strconv.Itoa(len(requestBody.Bytes())))
+	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Accept", c.Request.Header.Get("Accept"))
 
 	resp, err := client.HTTPClient.Do(req)
