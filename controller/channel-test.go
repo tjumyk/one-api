@@ -35,8 +35,13 @@ func buildTestRequest(model string) *relaymodel.GeneralOpenAIRequest {
 		model = "gpt-3.5-turbo"
 	}
 	testRequest := &relaymodel.GeneralOpenAIRequest{
-		MaxTokens: 2,
-		Model:     model,
+		Model: model,
+	}
+	if strings.HasPrefix(model, "o1") { // chat completion
+		var maxTokens = 2
+		testRequest.MaxCompletionTokens = &maxTokens
+	} else {
+		testRequest.MaxTokens = 2
 	}
 	testMessage := relaymodel.Message{
 		Role:    "user",

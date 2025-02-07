@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"strings"
 
@@ -53,6 +54,11 @@ func RelayAudioHelper(c *gin.Context, relayMode int) *relaymodel.ErrorWithStatus
 			return openai.ErrorWrapper(errors.New("input is too long (over 4096 characters)"), "text_too_long", http.StatusBadRequest)
 		}
 	}
+
+	// map model name
+	meta.OriginModelName = audioModel
+	audioModel, _ = getMappedModelName(audioModel, meta.ModelMapping)
+	meta.ActualModelName = audioModel
 
 	modelRatio := billingratio.GetModelRatio(audioModel, channelType)
 	groupRatio := billingratio.GetGroupRatio(group)
@@ -110,17 +116,17 @@ func RelayAudioHelper(c *gin.Context, relayMode int) *relaymodel.ErrorWithStatus
 	}()
 
 	// map model name
-	modelMapping := c.GetString(ctxkey.ModelMapping)
-	if modelMapping != "" {
-		modelMap := make(map[string]string)
-		err := json.Unmarshal([]byte(modelMapping), &modelMap)
-		if err != nil {
-			return openai.ErrorWrapper(err, "unmarshal_model_mapping_failed", http.StatusInternalServerError)
-		}
-		if modelMap[audioModel] != "" {
-			audioModel = modelMap[audioModel]
-		}
-	}
+	//modelMapping := c.GetString(ctxkey.ModelMapping)
+	//if modelMapping != "" {
+	//	modelMap := make(map[string]string)
+	//	err := json.Unmarshal([]byte(modelMapping), &modelMap)
+	//	if err != nil {
+	//		return openai.ErrorWrapper(err, "unmarshal_model_mapping_failed", http.StatusInternalServerError)
+	//	}
+	//	if modelMap[audioModel] != "" {
+	//		audioModel = modelMap[audioModel]
+	//	}
+	//}
 
 	baseURL := channeltype.ChannelBaseURLs[channelType]
 	requestURL := c.Request.URL.String()
@@ -140,15 +146,52 @@ func RelayAudioHelper(c *gin.Context, relayMode int) *relaymodel.ErrorWithStatus
 		}
 	}
 
-	requestBody := &bytes.Buffer{}
-	_, err = io.Copy(requestBody, c.Request.Body)
-	if err != nil {
-		return openai.ErrorWrapper(err, "new_request_body_failed", http.StatusInternalServerError)
+	var requestBody bytes.Buffer
+	var contentType string
+	if relayMode == relaymode.AudioTranscription {
+		writer := multipart.NewWriter(&requestBody)
+		writer.WriteField("model", audioModel)
+
+		// 获取所有表单字段
+		formData := c.Request.PostForm
+		// 遍历表单字段并打印输出
+		for key, values := range formData {
+			if key == "model" {
+				continue
+			}
+			for _, value := range values {
+				writer.WriteField(key, value)
+			}
+		}
+		// 添加文件字段
+		file, header, err := c.Request.FormFile("file")
+		if err != nil {
+			return openai.ErrorWrapper(err, "file_is_required", http.StatusInternalServerError)
+		}
+		defer file.Close()
+		part, err := writer.CreateFormFile("file", header.Filename)
+		if err != nil {
+			return openai.ErrorWrapper(err, "create_form_file_failed", http.StatusInternalServerError)
+		}
+		if _, err := io.Copy(part, file); err != nil {
+			return openai.ErrorWrapper(err, "copy_file_failed", http.StatusInternalServerError)
+		}
+		// 关闭 multipart 编写器以设置分界线
+		writer.Close()
+		contentType = writer.FormDataContentType()
+	} else {
+		_, err = io.Copy(&requestBody, c.Request.Body)
+		if err != nil {
+			return openai.ErrorWrapper(err, "new_request_body_failed", http.StatusInternalServerError)
+		}
+		contentType = c.Request.Header.Get("Content-Type")
 	}
+
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(requestBody.Bytes()))
 	responseFormat := c.DefaultPostForm("response_format", "json")
+	bodySize := requestBody.Len()
 
-	req, err := http.NewRequest(c.Request.Method, fullRequestURL, requestBody)
+	req, err := http.NewRequest(c.Request.Method, fullRequestURL, &requestBody)
 	if err != nil {
 		return openai.ErrorWrapper(err, "new_request_failed", http.StatusInternalServerError)
 	}
@@ -158,11 +201,11 @@ func RelayAudioHelper(c *gin.Context, relayMode int) *relaymodel.ErrorWithStatus
 		apiKey := c.Request.Header.Get("Authorization")
 		apiKey = strings.TrimPrefix(apiKey, "Bearer ")
 		req.Header.Set("api-key", apiKey)
-		req.ContentLength = c.Request.ContentLength
+		req.ContentLength = int64(bodySize)
 	} else {
 		req.Header.Set("Authorization", c.Request.Header.Get("Authorization"))
 	}
-	req.Header.Set("Content-Type", c.Request.Header.Get("Content-Type"))
+	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Accept", c.Request.Header.Get("Accept"))
 
 	resp, err := client.HTTPClient.Do(req)
