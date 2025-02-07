@@ -106,6 +106,27 @@ func Handler(c *gin.Context, resp *http.Response, promptTokens int, modelName st
 	if err != nil {
 		return ErrorWrapper(err, "close_response_body_failed", http.StatusInternalServerError), nil
 	}
+	if len(responseBody) == 0 {
+		resp.Body = io.NopCloser(bytes.NewBuffer(responseBody))
+		for k, v := range resp.Header {
+			c.Writer.Header().Set(k, v[0])
+		}
+		c.Writer.WriteHeader(resp.StatusCode)
+
+		//c.Writer.Write([]byte("{}"))
+		c.Render(-1, common.CustomEvent{Data: ""})
+		c.Writer.Flush()
+		err = resp.Body.Close()
+		if err != nil {
+			return ErrorWrapper(err, "close_response_body_failed", http.StatusInternalServerError), nil
+		}
+
+		return nil, &model.Usage{
+			PromptTokens:     promptTokens,
+			CompletionTokens: 0,
+			TotalTokens:      promptTokens,
+		}
+	}
 	err = json.Unmarshal(responseBody, &textResponse)
 	if err != nil {
 		return ErrorWrapper(err, "unmarshal_response_body_failed", http.StatusInternalServerError), nil
