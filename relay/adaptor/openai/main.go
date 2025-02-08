@@ -106,7 +106,7 @@ func Handler(c *gin.Context, resp *http.Response, promptTokens int, modelName st
 	if err != nil {
 		return ErrorWrapper(err, "close_response_body_failed", http.StatusInternalServerError), nil
 	}
-	if len(responseBody) == 0 {
+	if len(responseBody) == 0 { // in case response body is empty (e.g. deepseek under high pressure)
 		resp.Body = io.NopCloser(bytes.NewBuffer(responseBody))
 		for k, v := range resp.Header {
 			c.Writer.Header().Set(k, v[0])
@@ -121,10 +121,10 @@ func Handler(c *gin.Context, resp *http.Response, promptTokens int, modelName st
 			return ErrorWrapper(err, "close_response_body_failed", http.StatusInternalServerError), nil
 		}
 
-		return nil, &model.Usage{
-			PromptTokens:     promptTokens,
+		return nil, &model.Usage{ // assume no actual usage in this case
+			PromptTokens:     0,
 			CompletionTokens: 0,
-			TotalTokens:      promptTokens,
+			TotalTokens:      0,
 		}
 	}
 	err = json.Unmarshal(responseBody, &textResponse)
