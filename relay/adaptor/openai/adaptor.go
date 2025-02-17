@@ -63,6 +63,10 @@ func (a *Adaptor) SetupRequestHeader(c *gin.Context, req *http.Request, meta *me
 		req.Header.Set("api-key", meta.APIKey)
 		return nil
 	}
+	if strings.Contains(meta.BaseURL, "services.ai.azure.com") {
+		req.Header.Set("api-key", meta.APIKey)
+		return nil
+	}
 	req.Header.Set("Authorization", "Bearer "+meta.APIKey)
 	if meta.ChannelType == channeltype.OpenRouter {
 		req.Header.Set("HTTP-Referer", "https://github.com/songquanpeng/one-api")
