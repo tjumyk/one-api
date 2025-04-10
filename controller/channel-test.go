@@ -40,6 +40,9 @@ func buildTestRequest(model string) *relaymodel.GeneralOpenAIRequest {
 	if strings.HasPrefix(model, "o1") { // chat completion
 		var maxTokens = 2
 		testRequest.MaxCompletionTokens = &maxTokens
+	} else if strings.HasPrefix(model, "o3-mini") {
+		var maxTokens = 4
+		testRequest.MaxCompletionTokens = &maxTokens
 	} else {
 		testRequest.MaxTokens = 2
 	}
