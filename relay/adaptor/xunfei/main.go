@@ -47,7 +47,7 @@ func requestOpenAI2Xunfei(request model.GeneralOpenAIRequest, xunfeiAppId string
 	if strings.HasPrefix(domain, "generalv3") || domain == "4.0Ultra" {
 		functions := make([]model.Function, len(request.Tools))
 		for i, tool := range request.Tools {
-			functions[i] = tool.Function
+			functions[i] = *tool.Function
 		}
 		xunfeiRequest.Payload.Functions = &Functions{
 			Text: functions,
@@ -69,7 +69,7 @@ func getToolCalls(response *ChatResponse) []model.Tool {
 	toolCall := model.Tool{
 		Id:       fmt.Sprintf("call_%s", random.GetUUID()),
 		Type:     "function",
-		Function: *item.FunctionCall,
+		Function: item.FunctionCall,
 	}
 	toolCalls = append(toolCalls, toolCall)
 	return toolCalls

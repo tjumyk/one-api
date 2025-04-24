@@ -34,6 +34,9 @@ func (a *Adaptor) GetRequestURL(meta *meta.Meta) (string, error) {
 			// https://{resource_name}.openai.azure.com/openai/deployments/dall-e-3/images/generations?api-version=2024-03-01-preview
 			fullRequestURL := fmt.Sprintf("%s/openai/deployments/%s/images/generations?api-version=%s", meta.BaseURL, meta.ActualModelName, meta.Config.APIVersion)
 			return fullRequestURL, nil
+		} else if meta.Mode == relaymode.Response {
+			fullRequestURL := fmt.Sprintf("%s/openai/responses?api-version=%s", meta.BaseURL, meta.Config.APIVersion)
+			return fullRequestURL, nil
 		}
 
 		// https://learn.microsoft.com/en-us/azure/cognitive-services/openai/chatgpt-quickstart?pivots=rest-api&tabs=command-line#rest-api

@@ -65,6 +65,7 @@ type GeneralOpenAIRequest struct {
 	// Others
 	Instruction string `json:"instruction,omitempty"`
 	NumCtx      int    `json:"num_ctx,omitempty"`
+	Truncation  string `json:"truncation,omitempty"`
 }
 
 func (r GeneralOpenAIRequest) ParseInput() []string {

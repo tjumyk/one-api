@@ -74,7 +74,7 @@ func ConvertRequest(textRequest model.GeneralOpenAIRequest) *ChatRequest {
 	if textRequest.Tools != nil {
 		functions := make([]model.Function, 0, len(textRequest.Tools))
 		for _, tool := range textRequest.Tools {
-			functions = append(functions, tool.Function)
+			functions = append(functions, *tool.Function)
 		}
 		geminiRequest.Tools = []ChatTools{
 			{
@@ -219,7 +219,7 @@ func getToolCalls(candidate *ChatCandidate) []model.Tool {
 	toolCall := model.Tool{
 		Id:   fmt.Sprintf("call_%s", random.GetUUID()),
 		Type: "function",
-		Function: model.Function{
+		Function: &model.Function{
 			Arguments: string(argsBytes),
 			Name:      item.FunctionCall.FunctionName,
 		},

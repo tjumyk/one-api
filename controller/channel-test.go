@@ -43,12 +43,29 @@ func buildTestRequest(model string) *relaymodel.GeneralOpenAIRequest {
 	} else if strings.HasPrefix(model, "o3-mini") {
 		var maxTokens = 4
 		testRequest.MaxCompletionTokens = &maxTokens
-	} else {
+	} else if model != "computer-use-preview" {
 		testRequest.MaxTokens = 2
 	}
 	testMessage := relaymodel.Message{
 		Role:    "user",
 		Content: "hi",
+	}
+	if model == "computer-use-preview" {
+		var tool = relaymodel.Tool{
+			Type:          "computer_use_preview",
+			DisplayWidth:  1024,
+			DisplayHeight: 768,
+			Environment:   "browser",
+		}
+		testRequest.Tools = append(testRequest.Tools, tool)
+		testRequest.Input = []relaymodel.Message{
+			relaymodel.Message{
+				Role:    "user",
+				Content: "hi",
+			},
+		}
+		testRequest.Truncation = "auto"
+		return testRequest
 	}
 	testRequest.Messages = append(testRequest.Messages, testMessage)
 	return testRequest
@@ -57,9 +74,13 @@ func buildTestRequest(model string) *relaymodel.GeneralOpenAIRequest {
 func testChannel(channel *model.Channel, request *relaymodel.GeneralOpenAIRequest) (err error, openaiErr *relaymodel.Error) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
+	var path = "/v1/chat/completions"
+	if request.Model == "computer-use-preview" {
+		path = "/v1/responses"
+	}
 	c.Request = &http.Request{
 		Method: "POST",
-		URL:    &url.URL{Path: "/v1/chat/completions"},
+		URL:    &url.URL{Path: path},
 		Body:   nil,
 		Header: make(http.Header),
 	}

@@ -166,7 +166,7 @@ func StreamHandler(c *gin.Context, awsCli *bedrockruntime.Client) (*relaymodel.E
 					return true
 				} else { // finish_reason case
 					if len(lastToolCallChoice.Delta.ToolCalls) > 0 {
-						lastArgs := &lastToolCallChoice.Delta.ToolCalls[len(lastToolCallChoice.Delta.ToolCalls)-1].Function
+						lastArgs := lastToolCallChoice.Delta.ToolCalls[len(lastToolCallChoice.Delta.ToolCalls)-1].Function
 						if len(lastArgs.Arguments.(string)) == 0 { // compatible with OpenAI sending an empty object `{}` when no arguments.
 							lastArgs.Arguments = "{}"
 							response.Choices[len(response.Choices)-1].Delta.Content = nil

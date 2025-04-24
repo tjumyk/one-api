@@ -162,7 +162,7 @@ func StreamResponseClaude2OpenAI(claudeResponse *StreamResponse) (*openai.ChatCo
 				tools = append(tools, model.Tool{
 					Id:   claudeResponse.ContentBlock.Id,
 					Type: "function",
-					Function: model.Function{
+					Function: &model.Function{
 						Name:      claudeResponse.ContentBlock.Name,
 						Arguments: "",
 					},
@@ -174,7 +174,7 @@ func StreamResponseClaude2OpenAI(claudeResponse *StreamResponse) (*openai.ChatCo
 			responseText = claudeResponse.Delta.Text
 			if claudeResponse.Delta.Type == "input_json_delta" {
 				tools = append(tools, model.Tool{
-					Function: model.Function{
+					Function: &model.Function{
 						Arguments: claudeResponse.Delta.PartialJson,
 					},
 				})
@@ -219,7 +219,7 @@ func ResponseClaude2OpenAI(claudeResponse *Response) *openai.TextResponse {
 			tools = append(tools, model.Tool{
 				Id:   v.Id,
 				Type: "function", // compatible with other OpenAI derivative applications
-				Function: model.Function{
+				Function: &model.Function{
 					Name:      v.Name,
 					Arguments: string(args),
 				},
@@ -294,7 +294,7 @@ func StreamHandler(c *gin.Context, resp *http.Response) (*model.ErrorWithStatusC
 				continue
 			} else { // finish_reason case
 				if len(lastToolCallChoice.Delta.ToolCalls) > 0 {
-					lastArgs := &lastToolCallChoice.Delta.ToolCalls[len(lastToolCallChoice.Delta.ToolCalls)-1].Function
+					lastArgs := lastToolCallChoice.Delta.ToolCalls[len(lastToolCallChoice.Delta.ToolCalls)-1].Function
 					if len(lastArgs.Arguments.(string)) == 0 { // compatible with OpenAI sending an empty object `{}` when no arguments.
 						lastArgs.Arguments = "{}"
 						response.Choices[len(response.Choices)-1].Delta.Content = nil
