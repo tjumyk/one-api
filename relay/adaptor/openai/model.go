@@ -143,3 +143,51 @@ type CompletionsStreamResponse struct {
 		FinishReason string `json:"finish_reason"`
 	} `json:"choices"`
 }
+
+type ResponseStreamUsage struct {
+	InputTokens        int64 `json:"input_tokens"`
+	OutputTokens       int64 `json:"output_tokens"`
+	InputTokensDetails struct {
+		CachedTokens int64 `json:"cached_tokens"`
+	} `json:"input_tokens_details"`
+	OutputTokensDetails struct {
+		ReasoningTokens int64 `json:"reasoning_tokens"`
+	} `json:"output_tokens_details"`
+	TotalTokens int64 `json:"total_tonkens"`
+}
+
+type ResponseStreamContent struct {
+	Type        string   `json:"type"`
+	Annotations []string `json:"annotations,omitempty"`
+	Text        string   `json:"text,omitempty"`
+}
+type ResponseStreamOutput struct {
+	Id     string `json:"id"`
+	Type   string `json:"type"`
+	Status string `json:"status"`
+	Action struct {
+		Type string `json:"type"`
+	} `json:"action,omitempty"`
+	CallId  string                   `json:"call_id,omitempty"`
+	Content *[]ResponseStreamContent `json:"content,omitempty"`
+	Role    string                   `json:"role,omitempty"`
+}
+type ResponseStreamResponseResponse struct {
+	Id        string                 `json:"id"`
+	Object    string                 `json:"object"`
+	CreatedAt int64                  `json:"created_at"`
+	Status    string                 `json:"status"`
+	Error     string                 `json:"error,omitempty"`
+	Model     string                 `json:"model"`
+	Output    []ResponseStreamOutput `json:"output"`
+}
+type ResponseStreamResponse struct {
+	Type         string                          `json:"type"`
+	Response     *ResponseStreamResponseResponse `json:"response,omitempty"`
+	ItemId       string                          `json:"item_id,omitempty"`
+	OutputIndex  int64                           `json:"output_index,omitempty"`
+	ContentIndex int64                           `json:"content_index,omitempty"`
+	Delta        string                          `json:"delta,omitempty"`
+	Text         string                          `json:"text,omitempty"`
+	Usage        *ResponseStreamUsage            `json:"usage,omitempty"`
+}

@@ -77,6 +77,18 @@ func StreamHandler(c *gin.Context, resp *http.Response, relayMode int) (*model.E
 			for _, choice := range streamResponse.Choices {
 				responseText += choice.Text
 			}
+		case relaymode.Response:
+			render.StringData(c, data)
+			var streamResponse ResponseStreamResponse
+			err := json.Unmarshal([]byte(data[dataPrefixLength:]), &streamResponse)
+			if err != nil {
+				logger.SysError("error unmarshalling stream response: " + err.Error())
+				continue
+			}
+			if streamResponse.Type == "response.completed" {
+				responseText = streamResponse.Text
+			}
+
 		}
 	}
 
