@@ -25,6 +25,8 @@ func GetFullRequestURL(baseURL string, requestURL string, channelType int) strin
 		case channeltype.Azure:
 			fullRequestURL = fmt.Sprintf("%s%s", baseURL, strings.TrimPrefix(requestURL, "/openai/deployments"))
 		}
+	} else if strings.Contains(baseURL, "services.ai.azure.com") {
+		fullRequestURL = fmt.Sprintf("%s%s", baseURL, strings.TrimPrefix(requestURL, "/v1"))
 	}
 	return fullRequestURL
 }
