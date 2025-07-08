@@ -52,6 +52,7 @@ func ConvertRequest(request model.GeneralOpenAIRequest) *ChatRequest {
 			TopK:              request.TopK,
 			ResultFormat:      "message",
 			Tools:             request.Tools,
+			EnableThinking:    &request.EnableThinking,
 		},
 	}
 }

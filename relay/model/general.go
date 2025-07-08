@@ -66,6 +66,8 @@ type GeneralOpenAIRequest struct {
 	Instruction string `json:"instruction,omitempty"`
 	NumCtx      int    `json:"num_ctx,omitempty"`
 	Truncation  string `json:"truncation,omitempty"`
+	// https://help.aliyun.com/zh/model-studio/use-qwen-by-calling-api
+	EnableThinking bool `json:"enable_thinking,omitempty"`
 }
 
 func (r GeneralOpenAIRequest) ParseInput() []string {
