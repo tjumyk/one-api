@@ -38,7 +38,7 @@ func (a *Adaptor) GetRequestURL(meta *meta.Meta) (string, error) {
 			fullRequestURL := fmt.Sprintf("%s/openai/responses?api-version=%s", meta.BaseURL, meta.Config.APIVersion)
 			return fullRequestURL, nil
 		}
-		if meta.ActualModelName == "gpt-4.1" {
+		if strings.HasPrefix(meta.ActualModelName, "gpt-4.1") {
 			fullRequestURL := fmt.Sprintf("%s/openai/deployments/%s/chat/completions?api-version=%s", meta.BaseURL, meta.ActualModelName, meta.Config.APIVersion)
 			return fullRequestURL, nil
 		}

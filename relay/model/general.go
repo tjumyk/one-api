@@ -33,6 +33,7 @@ type GeneralOpenAIRequest struct {
 	TopLogprobs         *int            `json:"top_logprobs,omitempty"`
 	MaxTokens           int             `json:"max_tokens,omitempty"`
 	MaxCompletionTokens *int            `json:"max_completion_tokens,omitempty"`
+	MaxOutputTokens     *int            `json:"max_output_tokens,omitempty"`
 	N                   int             `json:"n,omitempty"`
 	Modalities          []string        `json:"modalities,omitempty"`
 	Prediction          any             `json:"prediction,omitempty"`

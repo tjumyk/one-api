@@ -40,10 +40,13 @@ func buildTestRequest(model string) *relaymodel.GeneralOpenAIRequest {
 	if strings.HasPrefix(model, "o1") { // chat completion
 		var maxTokens = 2
 		testRequest.MaxCompletionTokens = &maxTokens
-	} else if strings.HasPrefix(model, "o3-mini") {
+	} else if model == "o3-pro" {
+		var maxTokens = 16
+		testRequest.MaxOutputTokens = &maxTokens
+	} else if strings.HasPrefix(model, "o3") || strings.HasPrefix(model, "o4-mini") {
 		var maxTokens = 4
 		testRequest.MaxCompletionTokens = &maxTokens
-	} else if model != "computer-use-preview" {
+	} else if model != "computer-use-preview" && model != "codex-mini" {
 		testRequest.MaxTokens = 2
 	}
 	testMessage := relaymodel.Message{
@@ -67,6 +70,15 @@ func buildTestRequest(model string) *relaymodel.GeneralOpenAIRequest {
 		testRequest.Truncation = "auto"
 		return testRequest
 	}
+	if model == "codex-mini" || model == "o3-pro" {
+		testRequest.Input = []relaymodel.Message{
+			relaymodel.Message{
+				Role:    "user",
+				Content: "hi",
+			},
+		}
+		return testRequest
+	}
 	testRequest.Messages = append(testRequest.Messages, testMessage)
 	return testRequest
 }
@@ -75,7 +87,7 @@ func testChannel(channel *model.Channel, request *relaymodel.GeneralOpenAIReques
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	var path = "/v1/chat/completions"
-	if request.Model == "computer-use-preview" {
+	if request.Model == "computer-use-preview" || request.Model == "codex-mini" || request.Model == "o3-pro" {
 		path = "/v1/responses"
 	}
 	c.Request = &http.Request{
