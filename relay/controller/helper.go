@@ -98,9 +98,11 @@ func postConsumeQuota(ctx context.Context, usage *relaymodel.Usage, meta *meta.M
 	}
 	var quota int64
 	completionRatio := billingratio.GetCompletionRatio(textRequest.Model, meta.ChannelType)
+	cachedRatio := billingratio.GetModelCachedRatio(textRequest.Model, meta.ChannelType)
 	promptTokens := usage.PromptTokens
 	completionTokens := usage.CompletionTokens
-	quota = int64(math.Ceil((float64(promptTokens) + float64(completionTokens)*completionRatio) * ratio))
+	cachedTokens := usage.PromptTokensDetails.CachedTokens
+	quota = int64(math.Ceil((float64(promptTokens-cachedTokens)+float64(completionTokens)*completionRatio)*ratio + float64(cachedTokens)*cachedRatio))
 	if ratio != 0 && quota <= 0 {
 		quota = 1
 	}
@@ -123,7 +125,7 @@ func postConsumeQuota(ctx context.Context, usage *relaymodel.Usage, meta *meta.M
 	if systemPromptReset {
 		extraLog = " （注意系统提示词已被重置）"
 	}
-	logContent := fmt.Sprintf("模型倍率 %.2f，分组倍率 %.2f，补全倍率 %.2f%s", modelRatio, groupRatio, completionRatio, extraLog)
+	logContent := fmt.Sprintf("模型倍率 %.2f，缓存倍率 %.2f，分组倍率 %.2f，补全倍率 %.2f%s", modelRatio, cachedRatio, groupRatio, completionRatio, extraLog)
 	model.RecordConsumeLog(ctx, meta.UserId, meta.ChannelId, promptTokens, completionTokens, textRequest.Model, meta.TokenName, quota, logContent)
 	model.UpdateUserUsedQuotaAndRequestCount(meta.UserId, quota)
 	model.UpdateChannelUsedQuota(meta.ChannelId, quota)
