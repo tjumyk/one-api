@@ -26,6 +26,19 @@ def get_output_text(resp: Any) -> str:
         return ""
 
 
+def get_response_json(resp: Any) -> str:
+    try:
+        if hasattr(resp, "model_dump"):
+            payload = resp.model_dump(mode="json")
+        elif hasattr(resp, "to_dict"):
+            payload = resp.to_dict()
+        else:
+            payload = json.loads(resp.model_dump_json())
+        return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    except Exception:
+        return ""
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", required=True)
@@ -51,6 +64,7 @@ def main() -> int:
         "match": False,
         "latency_ms": 0,
         "error": "",
+        "response_json": "",
         "response_message": "",
         "response_message_preview": "",
     }
@@ -92,6 +106,7 @@ def main() -> int:
         latency_ms = int((time.time() - start) * 1000)
         latency_ms = int((time.time() - start) * 1000)
         response_model = getattr(resp, "model", "") or ""
+        response_json = get_response_json(resp)
         response_message = get_output_text(resp)
         response_message_preview = response_message[:200]
         row.update({
@@ -99,6 +114,7 @@ def main() -> int:
             "success": True,
             "match": response_model == args.claimed_model,
             "latency_ms": latency_ms,
+            "response_json": response_json,
             "response_message": response_message,
             "response_message_preview": response_message_preview,
         })
@@ -124,13 +140,27 @@ def main() -> int:
                     "match",
                     "latency_ms",
                     "error",
+                    "response_json",
                     "response_message",
                     "response_message_preview",
                 ],
             )
             if f.tell() == 0:
                 writer.writeheader()
-            writer.writerow(row)
+            writer.writerow({k: row.get(k, "") for k in [
+                "channel_id",
+                "requested_model",
+                "claimed_model",
+                "response_model",
+                "max_output_tokens",
+                "success",
+                "match",
+                "latency_ms",
+                "error",
+                "response_json",
+                "response_message",
+                "response_message_preview",
+            ]})
 
     print(json.dumps(row, ensure_ascii=True))
     return 0 if row["success"] and row["match"] else 1
