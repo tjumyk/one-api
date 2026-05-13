@@ -85,8 +85,25 @@ func StreamHandler(c *gin.Context, resp *http.Response, relayMode int) (*model.E
 				logger.SysError("error unmarshalling stream response: " + err.Error())
 				continue
 			}
-			if streamResponse.Type == "response.completed" {
-				responseText = streamResponse.Text
+			switch streamResponse.Type {
+			case "response.output_text.delta":
+				responseText += streamResponse.Delta
+			case "response.completed":
+				if streamResponse.Text != "" {
+					responseText = streamResponse.Text
+				}
+				if streamResponse.Usage != nil {
+					usage = &model.Usage{
+						PromptTokens:     int(streamResponse.Usage.InputTokens),
+						CompletionTokens: int(streamResponse.Usage.OutputTokens),
+						TotalTokens:      int(streamResponse.Usage.TotalTokens),
+					}
+					if streamResponse.Usage.InputTokensDetails.CachedTokens != 0 {
+						usage.PromptTokensDetails = &struct{ CachedTokens int `json:"cached_tokens"` }{
+							CachedTokens: int(streamResponse.Usage.InputTokensDetails.CachedTokens),
+						}
+					}
+				}
 			}
 
 		}
