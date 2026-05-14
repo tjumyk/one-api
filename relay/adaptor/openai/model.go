@@ -153,7 +153,7 @@ type ResponseStreamUsage struct {
 	OutputTokensDetails struct {
 		ReasoningTokens int64 `json:"reasoning_tokens"`
 	} `json:"output_tokens_details"`
-	TotalTokens int64 `json:"total_tokens"`
+	TotalTokens int64 `json:"total_tonkens"`
 }
 
 type ResponseStreamContent struct {

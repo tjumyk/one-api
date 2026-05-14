@@ -39,24 +39,6 @@ var ModelRatio = map[string]ModelRatioDetail{
 	"gpt-4o-2024-08-06":       {NormalRatio: 1.25, CachedRatio: 1.25},   // $0.0025 / 1K tokens
 	"gpt-4o-mini":             {NormalRatio: 0.075, CachedRatio: 0.075}, // $0.00015 / 1K tokens
 	"gpt-4o-mini-2024-07-18":  {NormalRatio: 0.075, CachedRatio: 0.075}, // $0.00015 / 1K tokens
-	"gpt-5-chat":              {NormalRatio: 0.625, CachedRatio: 0.625},
-	"gpt-5":                   {NormalRatio: 0.625, CachedRatio: 0.625},
-	"gpt-5-2025-08-07":        {NormalRatio: 0.625, CachedRatio: 0.625},
-	"gpt-5-chat-latest":       {NormalRatio: 0.625, CachedRatio: 0.625},
-	"gpt-5-mini":              {NormalRatio: 0.125, CachedRatio: 0.125},
-	"gpt-5-mini-2025-08-07":   {NormalRatio: 0.125, CachedRatio: 0.125},
-	"gpt-5.4":                 {NormalRatio: 0.625, CachedRatio: 0.625},
-	"gpt-5.4-mini":            {NormalRatio: 0.125, CachedRatio: 0.125},
-	"gpt-5.4-pro":             {NormalRatio: 0.625, CachedRatio: 0.625},
-	"gpt-5.4-nano":            {NormalRatio: 0.025, CachedRatio: 0.025},
-	"gpt-5-nano":              {NormalRatio: 0.025, CachedRatio: 0.025},
-	"gpt-5.1":                 {NormalRatio: 0.625, CachedRatio: 0.625},
-	"gpt-5.1-chat":            {NormalRatio: 0.625, CachedRatio: 0.625},
-	"gpt-5.1-codex":           {NormalRatio: 0.625, CachedRatio: 0.625},
-	"gpt-5.1-codex-mini":      {NormalRatio: 0.125, CachedRatio: 0.125},
-	"gpt-5-codex":             {NormalRatio: 0.625, CachedRatio: 0.625},
-	"gpt-5.2":                 {NormalRatio: 0.625, CachedRatio: 0.625},
-	"gpt-5.2-codex":           {NormalRatio: 0.625, CachedRatio: 0.625},
 	"gpt-4-vision-preview":    {NormalRatio: 5, CachedRatio: 5},         // $0.01 / 1K tokens
 	"gpt-3.5-turbo":           {NormalRatio: 0.25, CachedRatio: 0.25},   // $0.0005 / 1K tokens
 	"gpt-3.5-turbo-0301":      {NormalRatio: 0.75, CachedRatio: 0.75},
