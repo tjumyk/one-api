@@ -39,8 +39,27 @@ var ModelRatio = map[string]ModelRatioDetail{
 	"gpt-4o-2024-08-06":       {NormalRatio: 1.25, CachedRatio: 1.25},   // $0.0025 / 1K tokens
 	"gpt-4o-mini":             {NormalRatio: 0.075, CachedRatio: 0.075}, // $0.00015 / 1K tokens
 	"gpt-4o-mini-2024-07-18":  {NormalRatio: 0.075, CachedRatio: 0.075}, // $0.00015 / 1K tokens
-	"gpt-4-vision-preview":    {NormalRatio: 5, CachedRatio: 5},         // $0.01 / 1K tokens
-	"gpt-3.5-turbo":           {NormalRatio: 0.25, CachedRatio: 0.25},   // $0.0005 / 1K tokens
+	"gpt-5-chat":              {NormalRatio: 0.625, CachedRatio: 0.625},
+	"gpt-5":                   {NormalRatio: 0.625, CachedRatio: 0.625},
+	"gpt-5-2025-08-07":        {NormalRatio: 0.625, CachedRatio: 0.625},
+	"gpt-5-chat-latest":       {NormalRatio: 0.625, CachedRatio: 0.625},
+	"gpt-5-mini":              {NormalRatio: 0.125, CachedRatio: 0.125},
+	"gpt-5-mini-2025-08-07":   {NormalRatio: 0.125, CachedRatio: 0.125},
+	"gpt-5.4":                 {NormalRatio: 0.625, CachedRatio: 0.625},
+	"gpt-5.4-mini":            {NormalRatio: 0.125, CachedRatio: 0.125},
+	"gpt-5.4-pro":             {NormalRatio: 0.625, CachedRatio: 0.625},
+	"gpt-5.4-nano":            {NormalRatio: 0.025, CachedRatio: 0.025},
+	"gpt-5.5":                 {NormalRatio: 0.88, CachedRatio: 0.09},
+	"gpt-5-nano":              {NormalRatio: 0.025, CachedRatio: 0.025},
+	"gpt-5.1":                 {NormalRatio: 0.625, CachedRatio: 0.625},
+	"gpt-5.1-chat":            {NormalRatio: 0.625, CachedRatio: 0.625},
+	"gpt-5.1-codex":           {NormalRatio: 0.625, CachedRatio: 0.625},
+	"gpt-5.1-codex-mini":      {NormalRatio: 0.125, CachedRatio: 0.125},
+	"gpt-5-codex":             {NormalRatio: 0.625, CachedRatio: 0.625},
+	"gpt-5.2":                 {NormalRatio: 0.625, CachedRatio: 0.625},
+	"gpt-5.2-codex":           {NormalRatio: 0.625, CachedRatio: 0.625},
+	"gpt-4-vision-preview":    {NormalRatio: 5, CachedRatio: 5},       // $0.01 / 1K tokens
+	"gpt-3.5-turbo":           {NormalRatio: 0.25, CachedRatio: 0.25}, // $0.0005 / 1K tokens
 	"gpt-3.5-turbo-0301":      {NormalRatio: 0.75, CachedRatio: 0.75},
 	"gpt-3.5-turbo-0613":      {NormalRatio: 0.75, CachedRatio: 0.75},
 	"gpt-3.5-turbo-16k":       {NormalRatio: 1.5, CachedRatio: 1.5}, // $0.003 / 1K tokens
@@ -241,15 +260,36 @@ func init() {
 }
 
 func AddNewMissingRatio(oldRatio string) string {
-	newRatio := make(map[string]float64)
-	err := json.Unmarshal([]byte(oldRatio), &newRatio)
+	rawRatio := make(map[string]interface{})
+	err := json.Unmarshal([]byte(oldRatio), &rawRatio)
 	if err != nil {
 		logger.SysError("error unmarshalling old ratio: " + err.Error())
 		return oldRatio
 	}
+
+	newRatio := make(map[string]ModelRatioDetail)
+	for model, val := range rawRatio {
+		switch v := val.(type) {
+		case float64:
+			newRatio[model] = ModelRatioDetail{NormalRatio: v, CachedRatio: v}
+		case map[string]interface{}:
+			detail := ModelRatioDetail{}
+			if nr, ok := v["normal_ratio"].(float64); ok {
+				detail.NormalRatio = nr
+			}
+			if cr, ok := v["cached_ratio"].(float64); ok {
+				detail.CachedRatio = cr
+			} else {
+				detail.CachedRatio = detail.NormalRatio
+			}
+			newRatio[model] = detail
+		default:
+			logger.SysError(fmt.Sprintf("unknown model ratio format: model=%s, value=%v", model, val))
+		}
+	}
 	for k, v := range DefaultModelRatio {
 		if _, ok := newRatio[k]; !ok {
-			newRatio[k] = v.NormalRatio
+			newRatio[k] = v
 		}
 	}
 	jsonBytes, err := json.Marshal(newRatio)
