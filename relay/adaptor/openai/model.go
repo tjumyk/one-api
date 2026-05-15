@@ -153,7 +153,7 @@ type ResponseStreamUsage struct {
 	OutputTokensDetails struct {
 		ReasoningTokens int64 `json:"reasoning_tokens"`
 	} `json:"output_tokens_details"`
-	TotalTokens int64 `json:"total_tonkens"`
+	TotalTokens int64 `json:"total_tokens"`
 }
 
 type ResponseStreamContent struct {
@@ -190,4 +190,27 @@ type ResponseStreamResponse struct {
 	Delta        string                          `json:"delta,omitempty"`
 	Text         string                          `json:"text,omitempty"`
 	Usage        *ResponseStreamUsage            `json:"usage,omitempty"`
+}
+
+type ResponseOutputContent struct {
+	Type string `json:"type,omitempty"`
+	Text string `json:"text,omitempty"`
+}
+
+type ResponseOutput struct {
+	Id      string                  `json:"id,omitempty"`
+	Type    string                  `json:"type,omitempty"`
+	Status  string                  `json:"status,omitempty"`
+	Role    string                  `json:"role,omitempty"`
+	Content []ResponseOutputContent `json:"content,omitempty"`
+}
+
+type ResponseTextResponse struct {
+	Id        string              `json:"id"`
+	Model     string              `json:"model,omitempty"`
+	Object    string              `json:"object"`
+	CreatedAt int64               `json:"created_at,omitempty"`
+	Output    []ResponseOutput    `json:"output,omitempty"`
+	Usage     ResponseStreamUsage `json:"usage"`
+	Error     *model.Error        `json:"error,omitempty"`
 }

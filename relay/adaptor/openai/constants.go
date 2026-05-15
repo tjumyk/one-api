@@ -11,6 +11,7 @@ var ModelList = []string{
 	"gpt-4o-2024-08-06",
 	"chatgpt-4o-latest",
 	"gpt-4o-mini", "gpt-4o-mini-2024-07-18",
+	"gpt-5.4", "gpt-5.4-mini", "gpt-5.4-pro", "gpt-5.4-nano", "gpt-5.5",
 	"gpt-4-vision-preview",
 	"text-embedding-ada-002", "text-embedding-3-small", "text-embedding-3-large",
 	"text-curie-001", "text-babbage-001", "text-ada-001", "text-davinci-002", "text-davinci-003",

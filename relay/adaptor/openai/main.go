@@ -85,8 +85,27 @@ func StreamHandler(c *gin.Context, resp *http.Response, relayMode int) (*model.E
 				logger.SysError("error unmarshalling stream response: " + err.Error())
 				continue
 			}
-			if streamResponse.Type == "response.completed" {
-				responseText = streamResponse.Text
+			switch streamResponse.Type {
+			case "response.output_text.delta":
+				responseText += streamResponse.Delta
+			case "response.completed":
+				if streamResponse.Text != "" {
+					responseText = streamResponse.Text
+				}
+				if streamResponse.Usage != nil {
+					usage = &model.Usage{
+						PromptTokens:     int(streamResponse.Usage.InputTokens),
+						CompletionTokens: int(streamResponse.Usage.OutputTokens),
+						TotalTokens:      int(streamResponse.Usage.TotalTokens),
+					}
+					if streamResponse.Usage.InputTokensDetails.CachedTokens != 0 {
+						usage.PromptTokensDetails = &struct {
+							CachedTokens int `json:"cached_tokens"`
+						}{
+							CachedTokens: int(streamResponse.Usage.InputTokensDetails.CachedTokens),
+						}
+					}
+				}
 			}
 
 		}
@@ -106,6 +125,86 @@ func StreamHandler(c *gin.Context, resp *http.Response, relayMode int) (*model.E
 	}
 
 	return nil, responseText, usage
+}
+
+func getResponseOutputText(response *ResponseTextResponse) string {
+	chunks := make([]string, 0)
+	for _, output := range response.Output {
+		for _, content := range output.Content {
+			if content.Type == "output_text" || content.Type == "text" {
+				chunks = append(chunks, content.Text)
+			}
+		}
+	}
+	return strings.Join(chunks, "")
+}
+
+func ResponseHandler(c *gin.Context, resp *http.Response, promptTokens int, modelName string) (*model.ErrorWithStatusCode, *model.Usage) {
+	var response ResponseTextResponse
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return ErrorWrapper(err, "read_response_body_failed", http.StatusInternalServerError), nil
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		return ErrorWrapper(err, "close_response_body_failed", http.StatusInternalServerError), nil
+	}
+	if len(responseBody) == 0 {
+		resp.Body = io.NopCloser(bytes.NewBuffer(responseBody))
+		for k, v := range resp.Header {
+			c.Writer.Header().Set(k, v[0])
+		}
+		c.Writer.WriteHeader(resp.StatusCode)
+		c.Render(-1, common.CustomEvent{Data: ""})
+		c.Writer.Flush()
+		return nil, &model.Usage{PromptTokens: 0, CompletionTokens: 0, TotalTokens: 0}
+	}
+	if err = json.Unmarshal(responseBody, &response); err != nil {
+		return ErrorWrapper(err, "unmarshal_response_body_failed", http.StatusInternalServerError), nil
+	}
+	if response.Error != nil && response.Error.Message != "" {
+		return &model.ErrorWithStatusCode{Error: *response.Error, StatusCode: resp.StatusCode}, nil
+	}
+
+	resp.Body = io.NopCloser(bytes.NewBuffer(responseBody))
+	for k, v := range resp.Header {
+		c.Writer.Header().Set(k, v[0])
+	}
+	c.Writer.WriteHeader(resp.StatusCode)
+	_, err = io.Copy(c.Writer, resp.Body)
+	if err != nil {
+		return ErrorWrapper(err, "copy_response_body_failed", http.StatusInternalServerError), nil
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		return ErrorWrapper(err, "close_response_body_failed", http.StatusInternalServerError), nil
+	}
+
+	usage := &model.Usage{
+		PromptTokens:     int(response.Usage.InputTokens),
+		CompletionTokens: int(response.Usage.OutputTokens),
+		TotalTokens:      int(response.Usage.TotalTokens),
+		PromptTokensDetails: &struct {
+			CachedTokens int `json:"cached_tokens"`
+		}{
+			CachedTokens: int(response.Usage.InputTokensDetails.CachedTokens),
+		},
+	}
+	if usage.TotalTokens == 0 || (usage.PromptTokens == 0 && usage.CompletionTokens == 0) {
+		responseText := getResponseOutputText(&response)
+		completionTokens := CountTokenText(responseText, modelName)
+		usage = &model.Usage{
+			PromptTokens:     promptTokens,
+			CompletionTokens: completionTokens,
+			TotalTokens:      promptTokens + completionTokens,
+			PromptTokensDetails: &struct {
+				CachedTokens int `json:"cached_tokens"`
+			}{
+				CachedTokens: 0,
+			},
+		}
+	}
+	return nil, usage
 }
 
 func Handler(c *gin.Context, resp *http.Response, promptTokens int, modelName string) (*model.ErrorWithStatusCode, *model.Usage) {
